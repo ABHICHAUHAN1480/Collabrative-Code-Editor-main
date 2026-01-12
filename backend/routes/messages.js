@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Message = require('../models/Message');
 const Room = require('../models/SimplifiedRoom');
+const aiClient= require( '../utils/aiClient');
 
 router.get('/room/:roomId', async (req, res) => {
   try {
@@ -11,20 +12,20 @@ router.get('/room/:roomId', async (req, res) => {
     console.log(`Getting messages for room: ${roomId}, channel: ${channel}`);
 
     const room = await Room.findOne({ roomId }).lean();
-    
+
     if (!room) {
       return res.status(404).json({ success: false, message: 'Room not found' });
     }
 
     const hasAccess = room.owner.toString() === req.user._id.toString() ||
-                     room.participants.some(p => p.user.toString() === req.user._id.toString()) ||
-                     !room.isPrivate;
+      room.participants.some(p => p.user.toString() === req.user._id.toString()) ||
+      !room.isPrivate;
 
     if (!hasAccess) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
-    const query = { 
+    const query = {
       $or: [
         { room: roomId },
         { room: `room-${roomId}` }
@@ -32,7 +33,7 @@ router.get('/room/:roomId', async (req, res) => {
       channel: channel,
       isDeleted: false
     };
-    
+
     if (before) {
       query.timestamp = { $lt: new Date(before) };
     }
@@ -78,7 +79,7 @@ router.post('/room/:roomId', async (req, res) => {
     }
 
     const room = await Room.findOne({ roomId }).lean();
-    
+
     if (!room) {
       return res.status(404).json({ success: false, message: 'Room not found' });
     }
@@ -152,13 +153,13 @@ router.delete('/room/:roomId/clear', async (req, res) => {
     console.log(`Clearing messages for room ${roomId}, channel: ${channel}, user: ${req.user.username}`);
 
     const room = await Room.findOne({ roomId }).lean();
-    
+
     if (!room) {
       return res.status(404).json({ success: false, message: 'Room not found' });
     }
 
     const hasAccess = room.owner.toString() === req.user._id.toString() ||
-                     room.participants.some(p => p.user.toString() === req.user._id.toString());
+      room.participants.some(p => p.user.toString() === req.user._id.toString());
 
     if (!hasAccess) {
       return res.status(403).json({ success: false, message: 'Access denied' });
@@ -201,5 +202,102 @@ router.delete('/room/:roomId/clear', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error clearing chat' });
   }
 });
+
+
+router.post("/room/:roomId/ai", async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const { message, fileId } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ success: false, message: "Message is required" });
+    }
+
+    
+    const room = await Room.findOne({ roomId });
+    if (!room) {
+      return res.status(404).json({ success: false, message: "Room not found" });
+    }
+
+    
+    let fileContent = "";
+    let fileName = "";
+
+    if (fileId) {
+      const file = room.getFileById(fileId);
+      if (file) {
+        fileContent = file.content || "";
+        fileName = file.name || "";
+      }
+    }
+
+    console.log("🧠 AI reading:", fileName || "No file");
+
+    
+    const response = await aiClient.responses.create({
+      model: "deepseek-ai/DeepSeek-V3.2",
+      input: `
+You are a senior software engineer AI named Codedebug AI.
+
+User request:
+${message}
+
+${fileName ? `FILE: ${fileName}` : ""}
+
+CODE:
+${fileContent || "No code provided"}
+
+Analyze and respond with(if code is provided, otherwise just respond normally):
+- bugs and fixes
+`,
+      temperature: 0.1,
+      max_output_tokens: 800
+    });
+
+    
+    const aiReply =
+      response.output_text ||
+      response.output?.[0]?.content?.[0]?.text ||
+      "AI failed to generate a response.";
+
+    
+    const newMessage = new Message({
+      room: `room-${roomId}`,
+      channel: "chat",
+      sender: null,
+      content: aiReply,
+      type: "ai",
+      senderUsername: "AI",
+      senderAvatar: null,
+      timestamp: new Date()
+    });
+
+    const savedMessage = await newMessage.save();
+
+    
+    const messageData = {
+      id: savedMessage._id,
+      message: savedMessage.content,
+      content: savedMessage.content,
+      type: "ai",
+      user: { id: "ai", username: "AI", profilePicture: null },
+      sender: { _id: "ai", username: "AI", profilePicture: null },
+      timestamp: savedMessage.timestamp
+    };
+
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`room-${roomId}`).emit("new-message", messageData);
+    }
+
+    res.json({ success: true, data: { message: messageData } });
+
+  } catch (error) {
+    console.error("❌ AI error:", error);
+    res.status(500).json({ success: false, message: "AI failed" });
+  }
+});
+
+
 
 module.exports = router;

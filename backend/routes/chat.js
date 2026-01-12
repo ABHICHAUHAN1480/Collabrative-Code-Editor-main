@@ -180,6 +180,92 @@ router.post('/project/:projectId/messages', verifyToken, async (req, res) => {
     });
   }
 });
+router.post("/project/:projectId/ai", verifyToken, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { message } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ success: false, message: "Message is required" });
+    }
+
+    if (!projectId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ success: false, message: "Invalid project ID" });
+    }
+
+    const project = await Project.findById(projectId)
+      .select("room owner collaborators isPublic")
+      .lean();
+
+    if (!project) {
+      return res.status(404).json({ success: false, message: "Project not found" });
+    }
+
+    
+    const hasAccess =
+      project.owner.toString() === req.user._id.toString() ||
+      project.collaborators.some(c => c.user.toString() === req.user._id.toString()) ||
+      project.isPublic;
+
+    if (!hasAccess) {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    
+    const aiReply = "This is a simulated AI response to your message (testing mode). "+message;
+
+    
+    const newMessage = new Message({
+      project: projectId,
+      channel: "general",
+      sender: null,           
+      content: aiReply,
+      type: "ai",
+      senderUsername: "AI",
+      senderAvatar: null,
+      timestamp: new Date(),
+      room: project.room?.roomId ? `room-${project.room.roomId}` : null
+    });
+
+    const savedMessage = await newMessage.save();
+
+    const messageData = {
+      id: savedMessage._id,
+      message: savedMessage.content,
+      content: savedMessage.content,
+      channel: "general",
+      user: {
+        id: "ai",
+        username: "AI",
+        profilePicture: null
+      },
+      sender: {
+        _id: "ai",
+        username: "AI",
+        profilePicture: null
+      },
+      timestamp: savedMessage.timestamp,
+      type: "ai",
+      
+    };
+
+    
+    const io = req.app.get("io");
+    if (io && project.room?.roomId) {
+      io.to(`room-${project.room.roomId}`).emit("new-message", messageData);
+    }
+
+    res.json({
+      success: true,
+      data: { message: messageData }
+    });
+
+  } catch (error) {
+    console.error("Project AI error:", error);
+    res.status(500).json({ success: false, message: "AI failed" });
+  }
+});
+
 
 router.delete('/project/:projectId/clear', verifyToken, async (req, res) => {
   try {
@@ -246,5 +332,6 @@ router.delete('/project/:projectId/clear', verifyToken, async (req, res) => {
     });
   }
 });
+
 
 module.exports = router;

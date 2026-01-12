@@ -973,13 +973,7 @@ const EditorPage = () => {
 
       {!showChat && !showUsers && !showOutput && (
         <div className="fixed bottom-4 right-4 flex flex-col space-y-2 z-40">
-          <button
-            onClick={() => setShowUsers(true)}
-            className=" rounded-full shadow-lg transition-all duration-200 transform hover:scale-105  "
-            title="Code Debug AI"
-          >
-            <img src={codeAIimg} alt="Code AI" className="w-11 overflow-hidden rounded-full" />
-          </button>
+         
           <button
             onClick={() => setShowUsers(true)}
             className="p-3 rounded-full shadow-lg transition-all duration-200 transform hover:scale-105 bg-green-600 hover:bg-green-700 text-white"

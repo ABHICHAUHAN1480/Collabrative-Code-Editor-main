@@ -4,6 +4,9 @@ import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../services/api';
 import { Send, MessageCircle, X, Loader, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 
 const ChatPanel = ({ roomId, projectId, onClose }) => {
   const { socket } = useSocket();
@@ -16,6 +19,12 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
   const [clearing, setClearing] = useState(false);
   const messagesEndRef = useRef(null);
   const messageIdRef = useRef(new Set());
+  const [showAIPicker, setShowAIPicker] = useState(false);
+  const [aiFiles, setAiFiles] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+
+
+
 
   useEffect(() => {
     if (roomId || projectId) {
@@ -30,18 +39,37 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
     scrollToBottom();
   }, [messages]);
 
+  const fetchFilesForAI = async () => {
+    try {
+      let res;
+      if (projectId) {
+        res = await apiService.getProjectFiles(projectId);
+      } else {
+        res = await apiService.getRoomFiles(roomId);
+      }
+
+      if (res?.success) {
+        setAiFiles(res.data.files || []);
+        console.log('Loaded files for AI:', res.data.files);
+      }
+    } catch (err) {
+      console.error("Failed to load files for AI", err);
+    }
+  };
+
+
   const handleNewMessage = useCallback((messageData) => {
     console.log('ChatPanel: New message received via socket:', messageData);
-    
+
     const messageId = messageData.id || messageData._id;
-    
+
     if (messageIdRef.current.has(messageId)) {
       console.log('ChatPanel: Duplicate message prevented:', messageId);
       return;
     }
-    
+
     messageIdRef.current.add(messageId);
-    
+
     const formattedMessage = {
       _id: messageId,
       id: messageId,
@@ -54,31 +82,37 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
       timestamp: messageData.timestamp || new Date(),
       type: messageData.type || 'text'
     };
-    
+
     console.log('Adding message with sender ID:', formattedMessage.sender._id, 'Current user ID:', user?._id);
-    
+
     setMessages(prev => [...prev, formattedMessage]);
-    
-    if (formattedMessage.sender._id !== user?._id) {
+
+    const isAI = messageData.type === "ai" || messageData.user?.id === "ai";
+
+    if (!isAI && formattedMessage.sender._id !== user?._id) {
       const messageText = messageData.message || messageData.content || '';
       const senderName = messageData.user?.username || messageData.sender?.username || 'Someone';
-      
-      const toastId = toast.success(`${senderName}: ${messageText.slice(0, 30)}${messageText.length > 30 ? '...' : ''}`, {
-        duration: 3000,
-        position: 'top-right',
-        id: `msg-${messageId}`
-      });
-      
+
+      const toastId = toast.success(
+        `${senderName}: ${messageText.slice(0, 30)}${messageText.length > 30 ? '...' : ''}`,
+        {
+          duration: 3000,
+          position: 'top-right',
+          id: `msg-${messageId}`
+        }
+      );
+
       setTimeout(() => toast.dismiss(toastId), 3000);
     }
+
   }, [user]);
 
   const handleChatCleared = useCallback((data) => {
     console.log('ChatPanel: Chat cleared event received:', data);
-    
+
     setMessages([]);
     messageIdRef.current.clear();
-    
+
     if (data.clearedBy?.id !== user?._id) {
       const toastId = toast.info(`${data.clearedBy?.username || 'Someone'} cleared the chat`, {
         duration: 3000,
@@ -92,7 +126,7 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
     if (socket) {
       socket.on('new-message', handleNewMessage);
       socket.on('chat-cleared', handleChatCleared);
-      
+
       return () => {
         socket.off('new-message', handleNewMessage);
         socket.off('chat-cleared', handleChatCleared);
@@ -104,7 +138,7 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
     try {
       setLoading(true);
       let response;
-      
+
       if (projectId) {
         console.log('Fetching project messages:', projectId);
         response = await apiService.getProjectMessages(projectId);
@@ -112,7 +146,7 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
         console.log('Fetching room messages:', roomId);
         response = await apiService.getRoomMessages(roomId);
       }
-      
+
       if (response?.success) {
         const fetchedMessages = (response.data.messages || []).map(msg => {
           const messageId = msg._id || msg.id;
@@ -130,7 +164,7 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
             type: msg.type || 'text'
           };
         });
-        
+
         console.log(`ChatPanel: Loaded ${fetchedMessages.length} messages from database`);
         setMessages(fetchedMessages);
       } else {
@@ -149,33 +183,51 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    
+    setShowAIPicker(false);
+    setSelectedFiles([]);
     if (!newMessage.trim() || sending) return;
 
     const messageText = newMessage.trim();
-    setNewMessage('');
+    const isAIRequest = /(^|\s)@ai(\s|$)/i.test(messageText);
+
+    setNewMessage("");
     setSending(true);
 
     try {
-      let response;
-      
+
+
+
+
+      let response; let AIresponse
       if (projectId) {
         response = await apiService.sendProjectMessage(projectId, messageText);
       } else if (roomId) {
         response = await apiService.sendRoomMessage(roomId, messageText);
       }
 
+
+      if (isAIRequest) {
+        if (projectId) {
+          AIresponse = await apiService.sendProjectMessageAi(projectId, messageText);
+        } else if (roomId) {
+          AIresponse = await apiService.sendRoomMessageAi(roomId, messageText, selectedFiles[0]);
+        }
+      }
+
       if (response?.success) {
         console.log('Message sent successfully:', response.data.message);
-        
       } else {
         throw new Error(response?.message || 'Failed to send message');
       }
-      
+      if (AIresponse?.success) {
+        console.log('AI Message sent successfully:', AIresponse.data.message);
+      } else if (isAIRequest) {
+        throw new Error(AIresponse?.message || 'Failed to send AI message');
+      }
+
     } catch (error) {
-      console.error('Error sending message:', error);
-      const toastId = toast.error('Failed to send message');
-      setTimeout(() => toast.dismiss(toastId), 3000);
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
       setNewMessage(messageText);
     } finally {
       setSending(false);
@@ -190,23 +242,23 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
     setClearing(true);
     try {
       let response;
-      
+
       if (projectId) {
         response = await apiService.clearProjectChat(projectId);
       } else if (roomId) {
         response = await apiService.clearRoomChat(roomId);
       }
-      
+
       if (response?.success) {
         setMessages([]);
         messageIdRef.current.clear();
-        
+
         const toastId = toast.success('Chat cleared successfully');
         setTimeout(() => toast.dismiss(toastId), 3000);
       } else {
         throw new Error(response?.message || 'Failed to clear chat');
       }
-      
+
       setShowClearConfirm(false);
     } catch (error) {
       console.error('Error clearing chat:', error);
@@ -239,7 +291,7 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
           <span className="text-white font-medium">Chat</span>
           <span className="text-xs text-gray-500">({messages.length})</span>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           {messages.length > 0 && (
             <button
@@ -255,7 +307,7 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
               )}
             </button>
           )}
-          
+
           <button
             onClick={onClose}
             className="p-1 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
@@ -283,28 +335,39 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
         ) : (
           <>
             {messages.map((message) => {
-              const isOwnMessage = message.sender?._id === user?._id || message.sender?._id?.toString() === user?._id?.toString();
-              const messageContent = message.content || message.message || '';
-              const username = message.sender?.username || 'Unknown';
-              
-              console.log('Rendering message:', {
-                messageId: message.id,
-                senderIs: message.sender?._id,
-                currentUser: user?._id,
-                isOwn: isOwnMessage
-              });
-              
+              const isAI = message.type === "ai";
+
+              const isOwnMessage =
+                !isAI &&
+                (message.sender?._id === user?._id ||
+                  message.sender?._id?.toString() === user?._id?.toString());
+
+              const messageContent = message.content || message.message || "";
+
+              const username = isAI
+                ? "AI"
+                : message.sender?.username || "Unknown";
+
+
+
+              // console.log('Rendering message:', {
+              //   messageId: message.id,
+              //   senderIs: message.sender?._id,
+              //   currentUser: user?._id,
+              //   isOwn: isOwnMessage
+              // });
+
               return (
                 <div key={message._id || message.id} className={`flex space-x-3 ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    isOwnMessage ? 'bg-blue-600' : 'bg-purple-600'
-                  }`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isAI ? 'bg-emerald-600' : isOwnMessage ? 'bg-blue-600' : 'bg-purple-600'
+                    }`}>
                     <span className="text-white text-sm font-bold">
-                      {username.charAt(0).toUpperCase()}
+                      {isAI ? "🤖" : username.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  
-                  <div className={`flex-1 min-w-0 max-w-xs ${isOwnMessage ? 'text-right' : ''}`}>
+
+
+                  <div className={`flex-1 min-w-0 max-w-[85%] ${isOwnMessage ? 'text-right' : ''}`}>
                     <div className={`flex items-center space-x-2 mb-1 ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''}`}>
                       <span className={`text-sm font-medium ${isOwnMessage ? 'text-blue-300' : 'text-white'}`}>
                         {isOwnMessage ? 'You' : username}
@@ -313,15 +376,48 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
                         {formatTime(message.timestamp)}
                       </span>
                     </div>
-                    
-                    <div className={`inline-block p-3 rounded-lg max-w-full break-words ${
-                      isOwnMessage 
-                        ? 'bg-blue-600 text-white rounded-br-sm' 
+
+                    <div className={`inline-block p-3 rounded-lg max-w-full break-words ${isAI
+                      ? 'bg-emerald-700 text-white border border-emerald-400'
+                      : isOwnMessage
+                        ? 'bg-blue-600 text-white rounded-br-sm'
                         : 'bg-gray-700 text-gray-200 rounded-bl-sm'
-                    }`}>
-                      <p className="text-sm whitespace-pre-wrap">
-                        {messageContent}
-                      </p>
+                      }`}>
+                      {isAI && (
+                        <p className="text-xs text-emerald-300 mb-1">AI Assistant</p>
+                      )}
+                      {isAI ? (
+                        <div className="prose prose-invert max-w-full text-sm overflow-hidden">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              pre: ({ node, ...props }) => (
+                                <div className="max-w-full overflow-x-auto rounded-lg  p-2 my-2">
+                                  <pre {...props} />
+                                </div>
+                              ),
+                              code: ({ inline, className, children, ...props }) =>
+                                inline ? (
+                                  <code className="bg-black/40 px-1 py-0.5 rounded text-purple-300" {...props}>
+                                    {children}
+                                  </code>
+                                ) : (
+                                  <code className="text-sm" {...props}>
+                                    {children}
+                                  </code>
+                                )
+                            }}
+                          >
+                            {messageContent}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <p className="text-sm whitespace-pre-wrap">
+                          {messageContent}
+                        </p>
+                      )}
+
+
                     </div>
                   </div>
                 </div>
@@ -333,12 +429,72 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
       </div>
 
       <div className="border-t border-gray-700 p-3 bg-gray-800 flex-shrink-0">
+        {showAIPicker && (
+          <div className="mb-2 p-2 rounded-lg border border-purple-500/40 bg-gray-900 shadow-sm max-h-36 overflow-y-auto">
+
+            {aiFiles.length === 0 && (
+              <p className="text-gray-500 text-xs text-center py-2">
+                No files
+              </p>
+            )}
+
+            <div className="flex gap-3">
+              {aiFiles.map(file => {
+                const isSelected = selectedFiles[0] === file.id;
+
+
+                return (
+                  <div
+                    key={file.id}
+                    onClick={() => {
+                      setSelectedFiles(isSelected ? [] : [file.id]);
+                    }}
+
+                    className={`flex items-center justify-between px-2 py-1 rounded-md cursor-pointer transition
+            ${isSelected
+                        ? "bg-purple-600/20 text-purple-300"
+                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                      }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+
+                      <span className="text-xs truncate">{file.name}</span>
+                    </div>
+
+                    <div
+                      className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[10px]
+              ${isSelected
+                          ? "border-purple-500 bg-purple-500 text-white"
+                          : "border-gray-500"
+                        }`}
+                    >
+                      {isSelected ? "✓" : ""}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+
         <form onSubmit={handleSendMessage} className="flex space-x-2">
           <input
             type="text"
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message..."
+            onChange={(e) => {
+              const value = e.target.value;
+              setNewMessage(value);
+
+              if (/(^|\s)@ai(\s|$)/i.test(value)) {
+                setShowAIPicker(true);
+                fetchFilesForAI();
+              } else {
+                setShowAIPicker(false);
+                setSelectedFiles([]);
+              }
+            }}
+            placeholder="use @ai to ask the AI assistant..."
             className="flex-1 bg-gray-700 text-white px-4 py-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-400"
             maxLength={5000}
             disabled={loading || sending}
@@ -369,7 +525,7 @@ const ChatPanel = ({ roomId, projectId, onClose }) => {
               </div>
               <h3 className="text-white text-lg font-medium">Clear Chat for Everyone</h3>
             </div>
-            
+
             <p className="text-gray-300 mb-6">
               Are you sure you want to clear all messages? This will permanently delete the chat history for <strong>ALL users</strong> in this {projectId ? 'project' : 'room'}.
             </p>

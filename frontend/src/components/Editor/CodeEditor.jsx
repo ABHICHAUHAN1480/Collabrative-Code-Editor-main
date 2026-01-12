@@ -4,9 +4,9 @@ import { useEditor } from '../../context/EditorContext';
 import { useSocket } from '../../context/SocketContext';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../services/api';
-import { 
-  Download, 
-  Copy, 
+import {
+  Download,
+  Copy,
   Check,
   FileCode,
   FolderPlus,
@@ -23,9 +23,25 @@ const CodeEditor = ({ roomId, projectId }) => {
   const lastSyncRef = useRef(null);
   const syncTimeoutRef = useRef(null);
   const isUpdatingFromRemoteRef = useRef(false);
-
+  const saveTimeoutRef = useRef(null);
   console.log('🔍 CodeEditor render:', { currentFile: currentFile?.name, roomId, projectId });
 
+   const saveFileToDB = async (fileId, content, language) => {
+      try {
+        const payload = {
+          content,
+          fileType: language,
+          room: roomId || null
+        };
+
+        await apiService.updateFile(fileId, payload);
+
+        console.log("💾 File saved to DB");
+      } catch (error) {
+        console.error("❌ Failed to save file:", error);
+        toast.error("Failed to save file");
+      }
+    };
   useEffect(() => {
     if (!currentFile && editorRef.current) {
       console.log('📄 No file selected, clearing editor');
@@ -51,7 +67,6 @@ const CodeEditor = ({ roomId, projectId }) => {
       projectId,
       roomId
     });
-
     const handleCodeUpdate = (data) => {
       console.log('📥 RECEIVE: code-updated', {
         fileId: data.fileId,
@@ -61,10 +76,10 @@ const CodeEditor = ({ roomId, projectId }) => {
         fromUser: data.user?.username,
         contentLength: data.content?.length
       });
-    
+
       const incomingUserId = data.user?.id?.toString();
       const myUserId = user?._id?.toString();
-      
+
       console.log('🔍 User ID comparison:', {
         incoming: incomingUserId,
         mine: myUserId,
@@ -82,20 +97,20 @@ const CodeEditor = ({ roomId, projectId }) => {
       }
 
       console.log('🔔 CODE UPDATE RECEIVED from:', data.user?.username);
-      
+
       if (editorRef.current && data.content !== undefined) {
         isUpdatingFromRemoteRef.current = true;
-        
+
         const currentPosition = editorRef.current.getPosition();
         console.log('✅ APPLYING REMOTE UPDATE from:', data.user?.username);
         editorRef.current.setValue(data.content);
         if (currentPosition) {
           editorRef.current.setPosition(currentPosition);
         }
-        
+
         updateFile({ id: currentFile.id, content: data.content });
         console.log('✅ Editor updated from remote');
-        
+
         setTimeout(() => {
           isUpdatingFromRemoteRef.current = false;
         }, 100);
@@ -128,8 +143,15 @@ const CodeEditor = ({ roomId, projectId }) => {
     }
 
     console.log('📝 Local change, length:', value?.length);
-    
+
     updateFile({ id: currentFile.id, content: value });
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      saveFileToDB(currentFile.id, value, currentFile.language);
+    }, 1000);
 
     if (syncTimeoutRef.current) {
       clearTimeout(syncTimeoutRef.current);
@@ -303,7 +325,7 @@ const CodeEditor = ({ roomId, projectId }) => {
             quickSuggestions: true,
           }}
         />
-       
+
       </div>
     </div>
   );

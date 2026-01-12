@@ -289,6 +289,9 @@ export const apiService = {
   async sendRoomMessage(roomId, message, type = 'text') {
     return await api.post(`/messages/room/${roomId}`, { message, type });
   },
+   async sendRoomMessageAi(roomId, message,fileId=null, type = 'text') {
+    return await api.post(`/messages/room/${roomId}/ai`, { message, type, fileId });
+  },
   
   async getProjectMessages(projectId, params = {}) {
     return await api.get(`/chat/project/${projectId}/messages`, { params });
@@ -296,6 +299,9 @@ export const apiService = {
   
   async sendProjectMessage(projectId, message, channel = 'general') {
     return await api.post(`/chat/project/${projectId}/messages`, { message, channel });
+  },
+   async sendProjectMessageAi(projectId, message, channel = 'general') {
+    return await api.post(`/chat/project/${projectId}/ai`, { message, channel });
   },
   
   async deleteMessage(messageId) {

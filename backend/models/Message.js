@@ -5,30 +5,30 @@ const messageSchema = new mongoose.Schema({
     type: String,
     index: true
   },
-  project: { 
+  project: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Project',
     index: true
   },
-  channel: { 
+  channel: {
     type: String,
     default: 'general'
   },
   sender: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false
   },
-  senderUsername: String, 
+  senderUsername: String,
   senderAvatar: String,
   content: {
     type: String,
     required: true,
-    maxlength: 5000 
+    maxlength: 5000
   },
   type: {
     type: String,
-    enum: ['text', 'system', 'code_execution'],
+    enum: ['text', 'system', 'code_execution', 'ai'],
     default: 'text'
   },
   codeExecution: {
@@ -39,10 +39,11 @@ const messageSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  deletedForUsers: [{ 
+  deletedForUsers: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
+ 
   timestamp: {
     type: Date,
     default: Date.now,
@@ -56,14 +57,14 @@ messageSchema.index({ room: 1, timestamp: -1 });
 messageSchema.index({ project: 1, timestamp: -1 });
 messageSchema.index({ sender: 1, timestamp: -1 });
 
-messageSchema.methods.softDelete = function(userId) {
+messageSchema.methods.softDelete = function (userId) {
   if (!this.deletedForUsers.includes(userId)) {
     this.deletedForUsers.push(userId);
   }
   return this.save();
 };
 
-messageSchema.pre('save', async function(next) {
+messageSchema.pre('save', async function (next) {
   if (this.isNew && this.sender) {
     try {
       const User = mongoose.model('User');
