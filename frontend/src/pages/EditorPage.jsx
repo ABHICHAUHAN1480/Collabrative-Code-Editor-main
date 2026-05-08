@@ -716,11 +716,17 @@ const EditorPage = () => {
       }
     } catch (error) {
       console.error('❌ Execution error:', error);
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Failed to execute code';
+
       setOutput({
         output: '',
-        error: error.message || 'Failed to execute code',
+        error: message,
         executionTime: 0,
-        exitCode: 1
+        exitCode: error.response?.status || 1
       });
     } finally {
       setExecuting(false);
@@ -782,34 +788,36 @@ const EditorPage = () => {
   const displayName = project?.name || room?.name || 'Untitled';
 
   return (
-    <div className="h-screen flex flex-col bg-gray-900 overflow-hidden">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#0f1013] text-white">
       <SocketDebugger />
 
-      <header className="bg-gray-800 border-b border-gray-700 px-4 py-2 flex-shrink-0 relative z-30">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+      <header className="relative z-30 flex-shrink-0 border-b border-white/10 bg-[#15171c]/95 px-3 py-3 backdrop-blur-xl sm:px-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <button
               onClick={() => navigate('/')}
-              className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+              className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-zinc-300 transition hover:bg-white/[0.08] hover:text-white"
               title="Home"
             >
               <Home className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center space-x-3">
-              <Code className="w-6 h-6 text-purple-400" />
-              <div>
-                <h1 className="text-white font-semibold text-lg">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="hidden h-10 w-10 items-center justify-center rounded-lg bg-emerald-400/10 text-emerald-300 sm:flex">
+                <Code className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="truncate text-base font-semibold text-white sm:text-lg">
                   {displayName}
                 </h1>
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs text-gray-400">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="truncate text-xs text-zinc-400">
                     Room: {displayRoomId}
                   </span>
                   {isJoinedRoom && (
-                    <span className="flex items-center space-x-1 text-xs">
-                      <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                      <span className="text-green-300">Connected</span>
+                    <span className="hidden items-center gap-1 text-xs sm:flex">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
+                      <span className="text-emerald-300">Connected</span>
                     </span>
                   )}
                 </div>
@@ -817,19 +825,19 @@ const EditorPage = () => {
 
               <button
                 onClick={handleCopyRoomId}
-                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                className="hidden items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-zinc-200 transition hover:bg-white/[0.08] sm:flex"
                 title="Copy Room ID"
               >
                 <Copy className="w-4 h-4" />
-                <span className="hidden sm:inline text-sm">Copy ID</span>
+                <span>Copy ID</span>
               </button>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-shrink-0 items-center gap-2">
             <button
               onClick={() => setShowProjectModal(true)}
-              className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-lg"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-sm font-semibold text-zinc-100 transition hover:border-white/20 hover:bg-white/[0.1]"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">New Project</span>
@@ -838,11 +846,11 @@ const EditorPage = () => {
             <button
               onClick={handleRunCode}
               disabled={!currentFile || isExecuting}
-              className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-emerald-400 px-3 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isExecuting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-950 border-t-transparent"></div>
                   <span className="hidden sm:inline">Running...</span>
                 </>
               ) : (
@@ -856,7 +864,7 @@ const EditorPage = () => {
             {showOutput && (
               <button
                 onClick={() => setShowOutput(false)}
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-sm text-zinc-100 transition hover:bg-white/[0.1]"
               >
                 <Square className="w-4 h-4" />
                 <span className="hidden sm:inline">Hide Output</span>
@@ -866,7 +874,7 @@ const EditorPage = () => {
             {((isJoinedRoom && !room?.isWorkspace) || isProjectMode) && (
               <button
                 onClick={handleLeaveRoom}
-                className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-amber-500/15 px-3 text-sm font-semibold text-amber-200 transition hover:bg-amber-500/25"
                 title="Leave Room"
               >
                 <DoorOpen className="w-4 h-4" />
@@ -876,7 +884,7 @@ const EditorPage = () => {
 
             <button
               onClick={handleLogout}
-              className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-200 transition-colors"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-red-400/20 bg-red-500/10 text-red-200 transition hover:bg-red-500/20"
               title="Logout"
             >
               <LogOut className="w-5 h-5" />
@@ -885,8 +893,8 @@ const EditorPage = () => {
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden min-h-0">
-        <div className="w-64 bg-gray-800 border-r border-gray-700 flex-shrink-0 relative z-20">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="relative z-20 w-72 flex-shrink-0 border-r border-white/10 bg-[#15171c]">
           <FileExplorer
             roomId={roomId}
             projectId={projectId}
@@ -898,7 +906,7 @@ const EditorPage = () => {
 
         <div className="flex-1 flex flex-col min-w-0 relative z-10">
           <div
-            className="bg-gray-900"
+            className="bg-[#0f1013]"
             style={{
               flex: showOutput ? '1 1 auto' : '1 1 100%',
               minHeight: 0,
@@ -910,7 +918,7 @@ const EditorPage = () => {
 
           {showOutput && (
             <div
-              className="border-t border-gray-700 bg-gray-900 relative z-15"
+              className="relative z-[15] border-t border-white/10 bg-[#0f1013]"
               style={{
                 height: '256px',
                 flexShrink: 0,
@@ -926,11 +934,11 @@ const EditorPage = () => {
           <div
             ref={panelRef}
             style={{ width: panelWidth }}
-            className="bg-gray-800 border-l border-gray-700 flex flex-col flex-shrink-0 relative z-25"
+            className="relative z-[25] flex flex-shrink-0 flex-col border-l border-white/10 bg-[#15171c]"
           >
             <div
               onMouseDown={startResize}
-              className="absolute left-0 top-0 h-full w-1 cursor-col-resize bg-gray-700 hover:bg-purple-500 transition"
+              className="absolute left-0 top-0 h-full w-1 cursor-col-resize bg-white/10 transition hover:bg-emerald-400"
             ></div>
             {showUsers && !showChat && (
               <div
@@ -972,17 +980,17 @@ const EditorPage = () => {
       </div>
 
       {!showChat && !showUsers && !showOutput && (
-        <div className="fixed bottom-4 right-4 flex flex-col space-y-2 z-40">
+        <div className="fixed bottom-4 right-4 z-40 flex flex-col gap-2">
          
           <button
             onClick={() => setShowUsers(true)}
-            className="p-3 rounded-full shadow-lg transition-all duration-200 transform hover:scale-105 bg-green-600 hover:bg-green-700 text-white"
+            className="rounded-full bg-emerald-400 p-3 text-zinc-950 shadow-lg shadow-black/30 transition hover:bg-emerald-300"
             title="Show Online Users"
           >
             <div className="relative">
               <Users className="w-5 h-5" />
               {uniqueParticipants.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-xs text-white">
                   {uniqueParticipants.length}
                 </span>
               )}
@@ -991,7 +999,7 @@ const EditorPage = () => {
 
           <button
             onClick={() => setShowChat(true)}
-            className="p-3 rounded-full shadow-lg transition-all duration-200 transform hover:scale-105 bg-purple-600 hover:bg-purple-700 text-white"
+            className="rounded-full bg-sky-400 p-3 text-zinc-950 shadow-lg shadow-black/30 transition hover:bg-sky-300"
             title="Open Chat"
           >
             <MessageCircle className="w-5 h-5" />

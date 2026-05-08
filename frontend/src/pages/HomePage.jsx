@@ -4,21 +4,21 @@ import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/api';
 import RoomManager from '../components/Room/RoomManager';
 import {
+  Activity,
+  AlertCircle,
+  ArrowRight,
   Code,
-  Play,
-  Users,
-  MessageCircle,
   Files,
-  Zap,
-  Globe,
+  FolderKanban,
+  Home,
+  Loader,
   Lock,
   LogOut,
-  Sparkles,
-  Plus,
-  LogIn,
-  Loader,
-  Home,
-  AlertCircle
+  MessageCircle,
+  Play,
+  ShieldCheck,
+  Users,
+  Zap
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -37,7 +37,7 @@ const HomePage = () => {
     try {
       setLoadingWorkspace(true);
       setWorkspaceError(null);
-      
+
       try {
         const response = await apiService.getUserWorkspace();
         if (response.success) {
@@ -48,7 +48,7 @@ const HomePage = () => {
       } catch (error) {
         console.log('No existing workspace found, creating new one...');
       }
-      
+
       const response = await apiService.initializeWorkspace();
       if (response.success) {
         console.log('Workspace initialized:', response.data.room.roomId);
@@ -75,7 +75,7 @@ const HomePage = () => {
       }
       return;
     }
-    
+
     console.log('Navigating to workspace:', userWorkspace.roomId);
     navigate(`/editor/${userWorkspace.roomId}`);
   };
@@ -93,242 +93,269 @@ const HomePage = () => {
     setTimeout(() => toast.dismiss(toastId), 3000);
   };
 
+  const workspaceStatus = loadingWorkspace
+    ? 'Preparing'
+    : workspaceError
+      ? 'Needs attention'
+      : userWorkspace
+        ? 'Ready'
+        : 'Pending';
+
+  const featureHighlights = [
+    {
+      icon: Users,
+      title: 'Live editing',
+      description: 'Collaborators can join the same room, edit together, and keep context in one place.',
+      tone: 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300'
+    },
+    {
+      icon: Zap,
+      title: 'Run code fast',
+      description: 'Execute JavaScript, Python, Java, C, and C++ without leaving the editor.',
+      tone: 'border-amber-400/20 bg-amber-400/10 text-amber-300'
+    },
+    {
+      icon: MessageCircle,
+      title: 'Chat with context',
+      description: 'Keep decisions, questions, and AI help beside the files they belong to.',
+      tone: 'border-sky-400/20 bg-sky-400/10 text-sky-300'
+    },
+    {
+      icon: Files,
+      title: 'Persistent files',
+      description: 'Rooms keep code, folders, chat history, and collaborators across sessions.',
+      tone: 'border-rose-400/20 bg-rose-400/10 text-rose-300'
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-      <header className="p-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
-              <Code className="w-8 h-8 text-white" />
+    <div className="min-h-screen bg-[#101114] text-white">
+      <header className="sticky top-0 z-30 border-b border-white/10 bg-[#101114]/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06]">
+              <Code className="h-6 w-6 text-emerald-300" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">CodeCollab</h1>
-              <p className="text-purple-200 text-sm">Collaborative Code Editor</p>
+              <h1 className="text-lg font-semibold leading-tight text-white">CodeCollab</h1>
+              <p className="text-xs text-zinc-400">Collaborative code workspace</p>
             </div>
           </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 text-white">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold">
+
+          <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-3 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 sm:flex">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-400/15 text-emerald-200">
+                <span className="text-sm font-semibold">
                   {user?.username?.charAt(0)?.toUpperCase() || 'U'}
                 </span>
               </div>
-              <div className="hidden md:block">
-                <span className="block">{user?.username}</span>
-              </div>
+              <span className="max-w-36 truncate text-sm text-zinc-200">{user?.username}</span>
             </div>
             <button
               onClick={handleLogout}
-              className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-200 hover:text-red-100 transition-colors"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-red-400/20 bg-red-500/10 text-red-200 transition hover:bg-red-500/20 hover:text-red-100"
               title="Logout"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="h-5 w-5" />
             </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="text-center mb-16">
-          <div className="flex items-center justify-center space-x-2 mb-6">
-            <Sparkles className="w-8 h-8 text-yellow-300" />
-            <h2 className="text-5xl md:text-7xl font-bold text-white">
-              Code Together
-            </h2>
-            <Sparkles className="w-8 h-8 text-yellow-300" />
-          </div>
-          <p className="text-xl md:text-2xl text-purple-100 mb-8 max-w-3xl mx-auto">
-            Real-time collaborative code editor with instant execution, live chat,
-            and seamless file management. Your workspace never changes!
-          </p>
-          
-          <div className="flex flex-col items-center space-y-4">
-            <button
-              onClick={handleQuickStart}
-              disabled={loadingWorkspace}
-              className="group bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-2xl"
-            >
-              {loadingWorkspace ? (
-                <div className="flex items-center space-x-3">
-                  <Loader className="w-6 h-6 animate-spin" />
-                  <span>Setting up workspace...</span>
-                </div>
-              ) : workspaceError ? (
-                <div className="flex items-center space-x-3">
-                  <AlertCircle className="w-6 h-6" />
-                  <span>Retry Setup</span>
-                </div>
-              ) : userWorkspace ? (
-                <div className="flex items-center space-x-3">
-                  <Home className="w-6 h-6" />
-                  <Code className="w-6 h-6" />
-                  <span>Enter My Workspace</span>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-3">
-                  <Play className="w-6 h-6" />
-                  <Code className="w-6 h-6" />
-                  <span>Start Coding</span>
+      <main>
+        <section className="border-b border-white/10">
+          <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:py-14">
+            <div className="space-y-7">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-sm text-emerald-200">
+                <Activity className="h-4 w-4" />
+                <span>{workspaceStatus} workspace</span>
+              </div>
+
+              <div className="space-y-4">
+                <h2 className="max-w-3xl text-4xl font-semibold leading-tight text-white sm:text-5xl">
+                  A cleaner place to build, run, and discuss code together.
+                </h2>
+                <p className="max-w-2xl text-base leading-7 text-zinc-300 sm:text-lg">
+                  Open your permanent workspace, spin up rooms for focused collaborations, and keep code, chat, and output in one durable flow.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  onClick={handleQuickStart}
+                  disabled={loadingWorkspace}
+                  className="inline-flex min-h-12 items-center justify-center gap-3 rounded-lg bg-emerald-400 px-5 py-3 text-sm font-semibold text-zinc-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loadingWorkspace ? (
+                    <>
+                      <Loader className="h-5 w-5 animate-spin" />
+                      <span>Setting up workspace</span>
+                    </>
+                  ) : workspaceError ? (
+                    <>
+                      <AlertCircle className="h-5 w-5" />
+                      <span>Retry setup</span>
+                    </>
+                  ) : userWorkspace ? (
+                    <>
+                      <Home className="h-5 w-5" />
+                      <span>Enter workspace</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-5 w-5" />
+                      <span>Start coding</span>
+                    </>
+                  )}
+                </button>
+
+                <a
+                  href="#rooms"
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:border-white/20 hover:bg-white/[0.08]"
+                >
+                  <FolderKanban className="h-5 w-5 text-amber-300" />
+                  Manage rooms
+                </a>
+              </div>
+
+              {workspaceError && (
+                <div className="max-w-xl rounded-lg border border-red-400/25 bg-red-500/10 p-4 text-sm text-red-100">
+                  <div className="flex items-center gap-2 font-medium">
+                    <AlertCircle className="h-5 w-5" />
+                    <span>{workspaceError}</span>
+                  </div>
+                  <button
+                    onClick={initializeUserWorkspace}
+                    className="mt-2 text-xs font-semibold text-red-100 underline-offset-4 hover:underline"
+                  >
+                    Try again
+                  </button>
                 </div>
               )}
-            </button>
-            
-            {userWorkspace && (
-              <div className="text-center">
-                <p className="text-purple-200 text-sm mb-2">
-                  Your persistent workspace: 
-                  <span className="font-mono bg-purple-800/30 px-2 py-1 rounded ml-1">
-                    {userWorkspace.roomId}
-                  </span>
-                </p>
-                <p className="text-purple-300 text-xs">
-                  This Room ID never changes - your files and collaborators will always be here
-                </p>
-              </div>
-            )}
-            
-            {workspaceError && (
-              <div className="bg-red-900/20 border border-red-600/30 rounded-lg p-4 max-w-md">
-                <div className="flex items-center space-x-2 text-red-300">
-                  <AlertCircle className="w-5 h-5" />
-                  <span className="text-sm">{workspaceError}</span>
+            </div>
+
+            <div className="rounded-lg border border-white/10 bg-white/[0.045] p-5 shadow-2xl shadow-black/30">
+              <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-5">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Personal workspace</p>
+                  <h3 className="mt-2 text-2xl font-semibold text-white">My Workspace</h3>
+                  <p className="mt-2 text-sm leading-6 text-zinc-400">
+                    Your stable home base for files, messages, project rooms, and returning collaborators.
+                  </p>
                 </div>
-                <button
-                  onClick={initializeUserWorkspace}
-                  className="mt-2 text-xs text-red-200 hover:text-red-100 underline"
-                >
-                  Try again
-                </button>
+                <div className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  workspaceError
+                    ? 'bg-red-400/10 text-red-200'
+                    : userWorkspace
+                      ? 'bg-emerald-400/10 text-emerald-200'
+                      : 'bg-amber-400/10 text-amber-200'
+                }`}>
+                  {workspaceStatus}
+                </div>
               </div>
-            )}
+
+              <div className="grid gap-4 py-5 sm:grid-cols-3">
+                <div>
+                  <p className="text-xs text-zinc-500">Room ID</p>
+                  <p className="mt-1 truncate font-mono text-sm text-zinc-100">
+                    {userWorkspace?.roomId || 'Creating...'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-500">Access</p>
+                  <p className="mt-1 text-sm font-medium text-zinc-100">
+                    {userWorkspace?.isPrivate ? 'Private' : 'Shareable'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-500">Persistence</p>
+                  <p className="mt-1 text-sm font-medium text-zinc-100">Always saved</p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-white/10 bg-[#15171c] p-4">
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="h-5 w-5 text-emerald-300" />
+                  <p className="text-sm font-medium text-white">Same room, every session</p>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-zinc-400">
+                  Share this ID once. Your collaborators can return later without chasing a new invite.
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div className="mb-16">
-          <RoomManager
-            userDefaultRoom={userWorkspace}
-            onRoomCreated={(room) => {
-              console.log('New room created:', room.roomId);
-              showToast(`Room "${room.name}" created successfully!`, 'success');
-            }}
-          />
-        </div>
-
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 mb-16">
-          <h3 className="text-2xl font-bold text-white text-center mb-8">How Your Persistent Workspace Works</h3>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Home className="w-8 h-8 text-purple-300" />
+        <section className="border-b border-white/10 bg-[#141519]">
+          <div className="mx-auto grid max-w-7xl gap-4 px-5 py-6 sm:grid-cols-3 sm:px-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-400/10 text-emerald-300">
+                <Home className="h-5 w-5" />
               </div>
-              <h4 className="text-lg font-semibold text-white mb-2">Your Permanent Workspace</h4>
-              <p className="text-purple-100 text-sm">
-                Every user gets a permanent workspace with a Room ID that never changes. Your files, 
-                chat history, and progress are always saved here.
+              <div>
+                <p className="text-xl font-semibold text-white">Permanent</p>
+                <p className="text-sm text-zinc-400">workspace identity</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-400/10 text-amber-300">
+                <Code className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xl font-semibold text-white">5+</p>
+                <p className="text-sm text-zinc-400">supported languages</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-400/10 text-rose-300">
+                <Lock className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xl font-semibold text-white">Private</p>
+                <p className="text-sm text-zinc-400">room sharing controls</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="rooms" className="bg-[#101114]">
+          <div className="mx-auto max-w-7xl px-5 py-10 sm:px-6">
+            <RoomManager
+              userDefaultRoom={userWorkspace}
+              onRoomCreated={(room) => {
+                console.log('New room created:', room.roomId);
+                showToast(`Room "${room.name}" created successfully!`, 'success');
+              }}
+            />
+          </div>
+        </section>
+
+        <section className="border-t border-white/10 bg-[#141519]">
+          <div className="mx-auto max-w-7xl px-5 py-10 sm:px-6">
+            <div className="mb-6 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+              <div>
+                <p className="text-sm font-medium text-emerald-300">Workflow</p>
+                <h3 className="mt-2 text-2xl font-semibold text-white">Tools arranged around coding</h3>
+              </div>
+              <p className="max-w-xl text-sm leading-6 text-zinc-400">
+                The main actions stay close, supporting details are quieter, and room management behaves like an operational dashboard.
               </p>
             </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Plus className="w-8 h-8 text-blue-300" />
-              </div>
-              <h4 className="text-lg font-semibold text-white mb-2">Additional Collaboration Rooms</h4>
-              <p className="text-purple-100 text-sm">
-                Create separate rooms for different projects or teams. Each room maintains its own 
-                files and chat, perfect for organizing multiple collaborations.
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <LogIn className="w-8 h-8 text-green-300" />
-              </div>
-              <h4 className="text-lg font-semibold text-white mb-2">Join Others' Rooms</h4>
-              <p className="text-purple-100 text-sm">
-                Collaborate by joining others' rooms using their Room ID. All rooms persist - 
-                you can always return to continue where you left off.
-              </p>
-            </div>
-          </div>
-        </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-105">
-            <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4">
-              <Users className="w-6 h-6 text-purple-300" />
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {featureHighlights.map(({ icon: Icon, title, description, tone }) => (
+                <div key={title} className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
+                  <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-lg border ${tone}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h4 className="text-base font-semibold text-white">{title}</h4>
+                  <p className="mt-2 text-sm leading-6 text-zinc-400">{description}</p>
+                </div>
+              ))}
             </div>
-            <h3 className="text-xl font-bold text-white mb-3">Real-time Collaboration</h3>
-            <p className="text-purple-100">
-              Work together with your team in real-time. See everyone's cursors, edits, and changes instantly.
-            </p>
           </div>
-
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-105">
-            <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4">
-              <Zap className="w-6 h-6 text-blue-300" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-3">Instant Code Execution</h3>
-            <p className="text-purple-100">
-              Execute code in JavaScript, Python, Java, C++, and C with real-time output display.
-            </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-105">
-            <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mb-4">
-              <MessageCircle className="w-6 h-6 text-green-300" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-3">Persistent Chat & Files</h3>
-            <p className="text-purple-100">
-              Your conversations and files never disappear. Everything is saved in your persistent workspace.
-            </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-105">
-            <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center mb-4">
-              <Files className="w-6 h-6 text-orange-300" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-3">File Management</h3>
-            <p className="text-purple-100">
-              Create, edit, rename, and delete files and folders. Full project organization with auto-save.
-            </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-105">
-            <div className="w-12 h-12 bg-indigo-500/20 rounded-xl flex items-center justify-center mb-4">
-              <Globe className="w-6 h-6 text-indigo-300" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-3">Easy Sharing</h3>
-            <p className="text-purple-100">
-              Share your workspace ID with anyone. Your room never changes, so collaborators can always return.
-            </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-105">
-            <div className="w-12 h-12 bg-pink-500/20 rounded-xl flex items-center justify-center mb-4">
-              <Lock className="w-6 h-6 text-pink-300" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-3">Secure & Private</h3>
-            <p className="text-purple-100">
-              Your code is secure with JWT authentication and optional private rooms with access codes.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="text-4xl font-bold text-white mb-2">∞</div>
-            <div className="text-purple-200">Persistent Workspaces</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-white mb-2">5+</div>
-            <div className="text-purple-200">Programming Languages</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-white mb-2">24/7</div>
-            <div className="text-purple-200">Always Available</div>
-          </div>
-        </div>
+        </section>
       </main>
     </div>
   );

@@ -11,7 +11,7 @@
 }
 
 .min-h-screen.flex {
-  background: linear-gradient(to bottom right, #581c87, #1e3a8a, #312e81);
+  background: #101114;
 }
 
 .min-h-screen.flex input {
@@ -25,6 +25,7 @@
 html, body, #root {
   height: 100%;
   font-family: 'Inter', sans-serif;
+  background: #101114;
 }
 
 ::-webkit-scrollbar {
@@ -32,20 +33,20 @@ html, body, #root {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1f2937;
+  background: #101114;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4b5563;
+  background: #3f444c;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
+  background: #717780;
 }
 
 .login-page {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #101114;
 }
 
 .login-page .bg-white\/10 {
@@ -53,7 +54,7 @@ html, body, #root {
 }
 
 .login-page input {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   color: white !important;
   backdrop-filter: blur(10px);
 }

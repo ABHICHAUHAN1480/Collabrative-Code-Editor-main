@@ -217,41 +217,39 @@ const CodeEditor = ({ roomId, projectId }) => {
 
   if (!currentFile) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-gray-900 text-gray-400">
-        <div className="text-center space-y-6 max-w-md px-8">
+      <div className="flex h-full flex-col items-center justify-center bg-[#0f1013] text-zinc-400">
+        <div className="max-w-md space-y-6 px-8 text-center">
           <div className="flex justify-center">
-            <div className="w-24 h-24 rounded-full bg-gray-800 flex items-center justify-center">
-              <FileCode className="w-12 h-12 text-purple-400" />
+            <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04]">
+              <FileCode className="h-10 w-10 text-emerald-300" />
             </div>
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-white">
+            <h2 className="text-2xl font-semibold text-white">
               No File Selected
             </h2>
-            <p className="text-gray-500">
-              Create or select a file from the file explorer to start coding
+            <p className="text-sm leading-6 text-zinc-500">
+              Select a file from the explorer to open it in the editor.
             </p>
           </div>
 
-          <div className="space-y-3 pt-4">
-            <div className="flex items-center space-x-2 text-sm">
-              <FilePlus className="w-4 h-4 text-green-400" />
-              <span className="text-gray-400">
-                Click <span className="text-white font-medium">+ New File</span> in the file explorer
-              </span>
+          <div className="grid gap-3 pt-2 sm:grid-cols-2">
+            <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4 text-left">
+              <FilePlus className="mb-3 h-5 w-5 text-emerald-300" />
+              <p className="text-sm font-medium text-white">Files</p>
+              <p className="mt-1 text-xs leading-5 text-zinc-500">Workspace and project files appear in the left panel.</p>
             </div>
-            <div className="flex items-center space-x-2 text-sm">
-              <FolderPlus className="w-4 h-4 text-blue-400" />
-              <span className="text-gray-400">
-                Or create a <span className="text-white font-medium">New Project</span> to organize your files
-              </span>
+            <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4 text-left">
+              <FolderPlus className="mb-3 h-5 w-5 text-amber-300" />
+              <p className="text-sm font-medium text-white">Projects</p>
+              <p className="mt-1 text-xs leading-5 text-zinc-500">Group files by collaboration or feature work.</p>
             </div>
           </div>
 
-          <div className="pt-6 border-t border-gray-800">
-            <p className="text-xs text-gray-600">
-              💡 Tip: All changes are automatically synced with your collaborators in real-time
+          <div className="border-t border-white/10 pt-5">
+            <p className="text-xs text-zinc-600">
+              Changes sync automatically when collaborators are connected.
             </p>
           </div>
         </div>
@@ -260,28 +258,28 @@ const CodeEditor = ({ roomId, projectId }) => {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-900">
-      <div className="bg-gray-800 border-b border-gray-700 px-4 py-2 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center space-x-3">
-          <FileCode className="w-4 h-4 text-purple-400" />
-          <span className="text-white font-medium text-sm">
+    <div className="flex h-full flex-col bg-[#0f1013]">
+      <div className="flex flex-shrink-0 items-center justify-between border-b border-white/10 bg-[#15171c] px-4 py-2">
+        <div className="flex min-w-0 items-center gap-3">
+          <FileCode className="h-4 w-4 flex-shrink-0 text-emerald-300" />
+          <span className="truncate text-sm font-medium text-white">
             {currentFile.name}
           </span>
-          <span className="text-xs text-gray-500">
+          <span className="rounded bg-white/[0.06] px-2 py-0.5 text-xs text-zinc-400">
             {currentFile.language || 'text'}
           </span>
           {connected && (
-            <span className="flex items-center space-x-1 text-xs text-green-400">
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            <span className="flex items-center gap-1 text-xs text-emerald-300">
+              <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
               <span>Live</span>
             </span>
           )}
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <button
             onClick={handleCopyCode}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
+            className="rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-white/[0.08] hover:text-white"
             title="Copy Code"
           >
             {copied ? (
@@ -293,7 +291,7 @@ const CodeEditor = ({ roomId, projectId }) => {
 
           <button
             onClick={handleDownloadFile}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
+            className="rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-white/[0.08] hover:text-white"
             title="Download File"
           >
             <Download className="w-4 h-4" />

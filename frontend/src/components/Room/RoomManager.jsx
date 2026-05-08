@@ -241,19 +241,20 @@ const RoomManager = ({ onRoomSelect, currentRoomId, userDefaultRoom, onRoomCreat
   };
 
   return (
-    <div className="bg-gray-900 p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4 sm:p-6">
+      <div className="mx-auto max-w-6xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h2 className="text-3xl font-bold text-white mb-2">My Rooms</h2>
-            <p className="text-gray-400">Your workspace and collaboration rooms</p>
+            <p className="text-sm font-medium text-emerald-300">Rooms</p>
+            <h2 className="mt-1 text-2xl font-semibold text-white">My coding spaces</h2>
+            <p className="mt-1 text-sm text-zinc-400">Enter your workspace, create a focused room, or join a collaborator.</p>
           </div>
           
-          <div className="flex space-x-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <button
               onClick={() => setShowJoinModal(true)}
-              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:border-white/20 hover:bg-white/[0.1]"
             >
               <LogIn className="w-4 h-4" />
               <span>Join Room</span>
@@ -261,7 +262,7 @@ const RoomManager = ({ onRoomSelect, currentRoomId, userDefaultRoom, onRoomCreat
             
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300"
             >
               <Plus className="w-4 h-4" />
               <span>Create Room</span>
@@ -271,36 +272,36 @@ const RoomManager = ({ onRoomSelect, currentRoomId, userDefaultRoom, onRoomCreat
 
   
         {userDefaultRoom && (
-          <div className="bg-gradient-to-r from-purple-800/50 to-blue-800/50 border border-purple-600/50 rounded-lg p-6 mb-8">
-            <div className="flex items-start justify-between">
+          <div className="mb-8 rounded-lg border border-emerald-400/20 bg-emerald-400/10 p-5">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-2">
-                  <Home className="w-6 h-6 text-purple-300" />
-                  <h3 className="text-xl font-bold text-white">My Workspace</h3>
+                <div className="mb-2 flex items-center gap-3">
+                  <Home className="h-6 w-6 text-emerald-300" />
+                  <h3 className="text-xl font-semibold text-white">My Workspace</h3>
                 </div>
-                <p className="text-purple-100 mb-4">
+                <p className="mb-4 max-w-2xl text-sm leading-6 text-emerald-50/80">
                   Your personal workspace. Files persist forever and collaborators can always find you here.
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
                   <div>
-                    <span className="text-purple-300">Room ID:</span>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <code className="bg-purple-900/50 px-2 py-1 rounded text-purple-200">{userDefaultRoom.roomId}</code>
+                    <span className="text-emerald-200/80">Room ID</span>
+                    <div className="mt-1 flex items-center gap-2">
+                      <code className="rounded bg-black/25 px-2 py-1 font-mono text-emerald-100">{userDefaultRoom.roomId}</code>
                       <button
                         onClick={() => copyRoomId(userDefaultRoom.roomId)}
-                        className="text-purple-300 hover:text-white"
+                        className="text-emerald-200 hover:text-white"
                       >
                         <Copy className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
                   <div>
-                    <span className="text-purple-300">Status:</span>
-                    <p className="text-green-400 font-medium mt-1">Always Available</p>
+                    <span className="text-emerald-200/80">Status</span>
+                    <p className="mt-1 font-medium text-emerald-100">Always Available</p>
                   </div>
                   <div>
-                    <span className="text-purple-300">Visibility:</span>
-                    <p className="text-blue-400 font-medium mt-1">
+                    <span className="text-emerald-200/80">Visibility</span>
+                    <p className="mt-1 font-medium text-emerald-100">
                       {userDefaultRoom.isPrivate ? 'Private' : 'Public'}
                     </p>
                   </div>
@@ -308,7 +309,7 @@ const RoomManager = ({ onRoomSelect, currentRoomId, userDefaultRoom, onRoomCreat
               </div>
               <button
                 onClick={() => navigate(`/editor/${userDefaultRoom.roomId}`)}
-                className="ml-4 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center space-x-2"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-300 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-200"
               >
                 <Code className="w-5 h-5" />
                 <span>Enter Workspace</span>
@@ -319,8 +320,8 @@ const RoomManager = ({ onRoomSelect, currentRoomId, userDefaultRoom, onRoomCreat
 
       
         <div className="mb-6">
-          <h3 className="text-xl font-semibold text-white mb-4 flex items-center space-x-2">
-            <Users className="w-5 h-5 text-blue-400" />
+          <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+            <Users className="w-5 h-5 text-sky-300" />
             <span>Additional Rooms</span>
           </h3>
           
@@ -329,23 +330,23 @@ const RoomManager = ({ onRoomSelect, currentRoomId, userDefaultRoom, onRoomCreat
               <Loader className="w-8 h-8 text-purple-500 animate-spin" />
             </div>
           ) : userRooms.length === 0 ? (
-            <div className="bg-gray-800 rounded-lg p-8 text-center border-2 border-dashed border-gray-600">
+            <div className="rounded-lg border border-dashed border-white/15 bg-white/[0.03] p-8 text-center">
               <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h4 className="text-lg font-semibold text-white mb-2">No additional rooms</h4>
               <p className="text-gray-400 mb-4">
                 Create rooms for different projects or join others' rooms to collaborate.
               </p>
-              <div className="flex justify-center space-x-4">
+              <div className="flex flex-col justify-center gap-3 sm:flex-row">
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Create Room</span>
                 </button>
                 <button
                   onClick={() => setShowJoinModal(true)}
-                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:border-white/20 hover:bg-white/[0.1]"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>Join Room</span>
@@ -358,7 +359,7 @@ const RoomManager = ({ onRoomSelect, currentRoomId, userDefaultRoom, onRoomCreat
                 const isOwner = isRoomOwner(room);
                 
                 return (
-                  <div key={room.roomId} className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-colors relative">
+                  <div key={room.roomId} className="relative rounded-lg border border-white/10 bg-[#15171c] p-4 transition hover:border-white/20">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1">
@@ -394,7 +395,7 @@ const RoomManager = ({ onRoomSelect, currentRoomId, userDefaultRoom, onRoomCreat
                                 className="fixed inset-0 z-10" 
                                 onClick={() => setActiveMenu(null)}
                               />
-                              <div className="absolute right-0 top-8 bg-gray-700 border border-gray-600 rounded-lg shadow-lg z-20 w-40">
+                              <div className="absolute right-0 top-8 z-20 w-40 rounded-lg border border-white/10 bg-[#1c1f26] shadow-lg">
                                 <button
                                   onClick={() => handleDeleteRoom(room)}
                                   className="w-full text-left px-3 py-2 text-red-300 hover:text-red-200 hover:bg-red-500/10 rounded-lg transition-colors flex items-center space-x-2"
@@ -413,7 +414,7 @@ const RoomManager = ({ onRoomSelect, currentRoomId, userDefaultRoom, onRoomCreat
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-400">Room ID:</span>
                         <div className="flex items-center space-x-1">
-                          <code className="bg-gray-700 px-2 py-1 rounded text-purple-300 text-xs">{room.roomId}</code>
+                          <code className="rounded bg-black/25 px-2 py-1 font-mono text-xs text-emerald-200">{room.roomId}</code>
                           <button
                             onClick={() => copyRoomId(room.roomId)}
                             className="text-gray-400 hover:text-white"
@@ -434,8 +435,8 @@ const RoomManager = ({ onRoomSelect, currentRoomId, userDefaultRoom, onRoomCreat
                         onClick={() => navigate(`/editor/${room.roomId}`)}
                         className={`flex-1 flex items-center justify-center space-x-2 py-2 px-3 rounded-lg transition-colors ${
                           currentRoomId === room.roomId
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white'
+                            ? 'bg-emerald-400 text-zinc-950'
+                            : 'bg-white/[0.06] hover:bg-white/[0.1] text-gray-300 hover:text-white'
                         }`}
                       >
                         <Code className="w-4 h-4" />
@@ -444,7 +445,7 @@ const RoomManager = ({ onRoomSelect, currentRoomId, userDefaultRoom, onRoomCreat
                       
                       <button
                         onClick={() => shareRoom(room)}
-                        className="p-2 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded-lg transition-colors"
+                        className="rounded-lg bg-white/[0.06] p-2 text-gray-300 transition-colors hover:bg-white/[0.1] hover:text-white"
                         title="Share Room"
                       >
                         <Share className="w-4 h-4" />
@@ -457,12 +458,12 @@ const RoomManager = ({ onRoomSelect, currentRoomId, userDefaultRoom, onRoomCreat
           )}
         </div>
 
-        <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-4">
+        <div className="rounded-lg border border-sky-400/20 bg-sky-400/10 p-4">
           <div className="flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 text-blue-400 mt-0.5" />
+            <AlertCircle className="mt-0.5 h-5 w-5 text-sky-300" />
             <div>
-              <h4 className="text-blue-300 font-semibold mb-1">Privacy Note</h4>
-              <p className="text-blue-100 text-sm">
+              <h4 className="mb-1 font-semibold text-sky-200">Privacy Note</h4>
+              <p className="text-sm leading-6 text-sky-100/80">
                 Only YOU can see your rooms listed here. Others cannot see your workspace or rooms unless you share the Room ID with them. Once you leave a room, you can rejoin anytime using the Room ID.
               </p>
             </div>
